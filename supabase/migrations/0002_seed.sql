@@ -19,7 +19,7 @@ BEGIN
         SELECT * FROM (VALUES
             ('Bailly-Romainvilliers', NULL::text),
             ('Chessy',                NULL::text),
-            ('Magny-le-Hares',        NULL::text),
+            ('Magny-le-Hongre',       NULL::text),
             ('Serris',                NULL::text),
             ('Villeneuve-le-Comte',   NULL::text),
             ('Coupvray',              NULL::text),
@@ -79,7 +79,7 @@ BEGIN
             ('KT',        'Bailly-Romainvilliers',      'Mercredi',  '11:00'::text, '12:00'::text, NULL::text, ARRAY['CE2_CM2']),
             ('KT',        'Bailly-Romainvilliers',      'Samedi',    '10:00'::text, '11:00'::text, NULL::text, ARRAY['CE2_CM2']),
             ('KT',        'Chessy',                     'Mercredi',  '17:30'::text, '19:00'::text, NULL::text, ARRAY['CE2_CM2']),
-            ('KT',        'Magny-le-Hares',             'Samedi',    '10:00'::text, '11:00'::text, NULL::text, ARRAY['CE2_CM2']),
+            ('KT',        'Magny-le-Hongre',             'Samedi',    '10:00'::text, '11:00'::text, NULL::text, ARRAY['CE2_CM2']),
             ('KT',        'Serris',                     'Mercredi',  '17:00'::text, '18:00'::text, NULL::text, ARRAY['CE2_CM2']),
             ('KT',        'Villeneuve-le-Comte',        'Mercredi',  '09:45'::text, '10:45'::text, NULL::text, ARRAY['CE2_CM2']),
             ('KT',        'Coupvray',                   'Samedi',    '10:00'::text, '11:00'::text, NULL::text, ARRAY['CE2_CM2']),
