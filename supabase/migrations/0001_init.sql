@@ -178,10 +178,9 @@ AS $$
     );
 $$;
 
--- A. Décompte des inscrits par créneau (LECTURE PUBLIQUE : affiché sur le
---    formulaire, jamais bloquant — la vue n'expose que des agrégats,
---    aucune donnée personnelle).
-CREATE VIEW v_creneaux_disponibles AS
+-- A. Décompte des inscrits par créneau.
+CREATE VIEW v_creneaux_disponibles
+WITH (security_invoker = true) AS
 SELECT
     cg.id AS creneau_id,
     cg.annee_scolaire_id,

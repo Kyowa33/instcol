@@ -11,7 +11,7 @@ import {
   type EtatEnfant,
   type EtatInscription,
 } from '../lib/inscription';
-import { chargerParametrage, type Parametrage } from '../lib/parametrage';
+import { chargerParametrage, oublierParametrage, type Parametrage } from '../lib/parametrage';
 import { messageErreur } from '../lib/supabase';
 import { calculerFrais, type EnfantAvecCreneaux } from '../lib/tarifs';
 import { naviguer } from '../router';
@@ -233,6 +233,9 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
           champTexte(`resp.${i}.prenom`, 'Prénom', r.prenom, { requis: true }),
           champTexte(`resp.${i}.nom`, 'Nom', r.nom, { requis: true }),
         ])}
+        ${i > 0
+          ? `<p><button type="button" class="btn btn-petit" data-action="dupliquer-adresse" data-index="${i}">Dupliquer l'adresse du responsable 1</button></p>`
+          : ''}
         ${champTexte(`resp.${i}.adresse`, 'Adresse postale', r.adresse, { requis: true })}
         ${grille([
           champTexte(`resp.${i}.code_postal`, 'Code postal', r.code_postal, { requis: true }),
@@ -261,7 +264,7 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
       <h2>Personnes exerçant l'autorité parentale</h2>
       <p class="aide">Le premier responsable est le référent du dossier.</p>
       ${cartes}
-      <p><button type="button" class="btn" data-action="ajouter-resp">+ Ajouter un second responsable</button></p>
+      <p><button type="button" class="btn" data-action="ajouter-resp">+ Ajouter un responsable</button></p>
       <div class="btn-groupe">
         <button type="button" class="btn btn-primaire" data-action="suivant">Continuer →</button>
       </div>
@@ -382,7 +385,8 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
       <div class="btn-groupe">
         <button type="button" class="btn" data-action="ajouter-enfant">+ Ajouter un enfant</button>
         <button type="button" class="btn" data-action="precedent">← Retour</button>
-        <button type="button" class="btn btn-primaire" data-action="suivant">Continuer →</button>
+        <button type="button" class="btn btn-primaire" data-action="suivant"
+          ${etat.enfants.length ? '' : 'disabled'}>Continuer →</button>
       </div>
       <div id="resume-frais" class="resume-frais" style="margin-top:18px">${resumeFraisHtml()}</div>
     </div>`;
@@ -613,11 +617,33 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
         enregistrer();
         rendreEtape();
         break;
-      case 'ajouter-resp':
-        etat.responsables.push({ ...etatVide().responsables[0], est_principal: false });
+      case 'ajouter-resp': {
+        const ref = etat.responsables[0];
+        etat.responsables.push({
+          ...etatVide().responsables[0],
+          est_principal: false,
+          adresse: ref.adresse,
+          code_postal: ref.code_postal,
+          ville: ref.ville,
+        });
         enregistrer();
         rendreEtape();
         break;
+      }
+      case 'dupliquer-adresse': {
+        const i = Number(bouton.dataset.index);
+        const ref = etat.responsables[0];
+        const r = etat.responsables[i];
+        if (i > 0 && r && ref) {
+          r.adresse = ref.adresse;
+          r.code_postal = ref.code_postal;
+          r.ville = ref.ville;
+          enregistrer();
+          rendreEtape();
+          toast("Adresse dupliquée depuis le responsable 1.", 'succes');
+        }
+        break;
+      }
       case 'supprimer-resp':
         etat.responsables.splice(Number(bouton.dataset.index), 1);
         enregistrer();
@@ -677,6 +703,9 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
 
       sessionStorage.setItem(CLE_CONFIRMATION, JSON.stringify(conf));
       effacerBrouillon();
+      // Les effectifs (dispos) ont changé : on invalite le cache du paramétrage
+      // pour que l'accueil ré-affiche des compteurs à jour.
+      oublierParametrage();
       naviguer('/confirmation');
     } catch (e) {
       toast(messageErreur(e), 'erreur');
