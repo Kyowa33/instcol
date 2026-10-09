@@ -117,6 +117,7 @@ export interface AutorisationParentale {
   id: string;
   famille_id: string;
   autorise_activites: boolean;
+  autorise_mesures_medicales: boolean;
   consentement_rgpd: boolean;
   droit_image: boolean;
   fait_a: string;

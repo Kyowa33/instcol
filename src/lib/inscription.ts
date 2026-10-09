@@ -36,6 +36,7 @@ export interface EtatEnfant {
 
 export interface EtatAutorisation {
   autorise_activites: boolean;
+  autorise_mesures_medicales: boolean;
   consentement_rgpd: boolean;
   droit_image: boolean;
   fait_a: string;
@@ -73,6 +74,7 @@ export function etatVide(): EtatInscription {
     commentaire_famille: '',
     autorisation: {
       autorise_activites: false,
+      autorise_mesures_medicales: false,
       consentement_rgpd: false,
       droit_image: false,
       fait_a: '',
@@ -150,6 +152,7 @@ export function construirePayload(etat: EtatInscription): Record<string, unknown
     commentaire_famille: etat.commentaire_famille.trim(),
     autorisations: {
       autorise_activites: etat.autorisation.autorise_activites,
+      autorise_mesures_medicales: etat.autorisation.autorise_mesures_medicales,
       consentement_rgpd: etat.autorisation.consentement_rgpd,
       droit_image: etat.autorisation.droit_image,
       fait_a: etat.autorisation.fait_a.trim(),

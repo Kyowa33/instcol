@@ -102,6 +102,7 @@ export async function rendreDossier(racine: HTMLElement, id: string): Promise<vo
       ? `<div class="ligne-info"><strong>Signée à</strong><span>${echappe(autorisation.fait_a)} — ${horodatageFr(autorisation.date_signature)}</span></div>
          <div class="ligne-info"><strong>Signataire</strong><span>${echappe(autorisation.nom_signataire)}</span></div>
          <div class="ligne-info"><strong>Activités</strong><span>${autorisation.autorise_activites ? 'autorisées' : 'refusées'}</span></div>
+         <div class="ligne-info"><strong>Mesures médicales</strong><span>${autorisation.autorise_mesures_medicales ? 'autorisées' : 'refusées'}</span></div>
          <div class="ligne-info"><strong>RGPD</strong><span>${autorisation.consentement_rgpd ? 'accepté' : 'refusé'}</span></div>
          <div class="ligne-info"><strong>Droit à l'image</strong><span>${autorisation.droit_image ? 'oui' : 'non'}</span></div>`
       : '<p class="aide">Aucune autorisation enregistrée.</p>';

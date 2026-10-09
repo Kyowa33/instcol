@@ -153,8 +153,16 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
         toast("L'autorisation de participation est obligatoire.", 'erreur');
         return false;
       }
+      if (!etat.autorisation.autorise_mesures_medicales) {
+        toast("L'autorisation des mesures médicales d'urgence est obligatoire.", 'erreur');
+        return false;
+      }
+      if (!etat.autorisation.droit_image) {
+        toast("L'autorisation de diffusion (photos / vidéos) est obligatoire.", 'erreur');
+        return false;
+      }
       if (!etat.autorisation.consentement_rgpd) {
-        toast('Le consentement RGPD est obligatoire (données sensibles).', 'erreur');
+        toast("L'autorisation d'utilisation de vos coordonnées est obligatoire (RGPD).", 'erreur');
         return false;
       }
     }
@@ -441,32 +449,48 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
 
   function htmlEtape4(): string {
     const a = etat.autorisation;
+    const ref = etat.responsables[0];
+    const identite = `${ref.prenom} ${ref.nom}`.trim() || '________';
     return `<div class="carte">
       <h2>Autorisation de décharge parentale</h2>
       <div class="encadre">
-        Je soussigné(e) <strong>${echappe(a.nom_signataire || '________')}</strong>,
-        autorise mon (mes) enfant(s) sus désigné(s) à participer aux activités organisées
-        dans le cadre de l'éveil à la foi, du catéchisme ou de l'aumônerie
-        (rencontres, temps forts, célébrations, sorties…), dans le respect du règlement
-        intérieur des activités paroissiales.
+        Je soussigné(e) <strong>${echappe(identite)}</strong> :
       </div>
 
       ${caseA(
         a.autorise_activites,
         'aut.autorise_activites',
-        "J'autorise mon (mes) enfant(s) à participer aux activités (rencontres, temps forts, célébrations, sorties…) *",
+        "<strong>autorise mon (mes) enfant(s), sus désigné(s), à participer aux activités organisées dans le cadre de l'éveil à la foi, du catéchisme ou de l'aumônerie</strong> (rencontres, temps forts, célébrations, sorties…) *",
       )}
       ${caseA(
-        a.consentement_rgpd,
-        'aut.consentement_rgpd',
-        "J'accepte la collecte des informations concernant les sacrements et la situation de mon enfant (données sensibles) *",
-        "Traitement nécessaire au suivi pastoral — conservé 3 ans après l'année scolaire, consultable sur demande.",
+        a.autorise_mesures_medicales,
+        'aut.autorise_mesures_medicales',
+        "<strong>autorise les responsables à prendre toutes les mesures médicales nécessaires en cas d'urgence</strong> *",
       )}
       ${caseA(
         a.droit_image,
         'aut.droit_image',
-        "J'autorise la publication de photos de mon enfant sur les supports de la paroisse (site, newsletter)",
+        "<strong>autorise la diffusion de photos, vidéos ou de tout autre document sur lequel pourrait figurer mon (mes) enfant(s) dans le cadre des activités de l'éveil à la foi, de la catéchèse ou de l'aumônerie</strong> *",
       )}
+      ${caseA(
+        a.consentement_rgpd,
+        'aut.consentement_rgpd',
+        "<strong>autorise la paroisse Saint-Colomban et le diocèse de Meaux à utiliser mes coordonnées dans le cadre de correspondances liées aux activités et événements paroissiaux, aux informations générales sur le diocèse et aux invitations aux événements diocésains, au service du Denier de l'Eglise, à l'envoi des reçus fiscaux.</strong> Ces données seront exclusivement exploitées par la paroisse Saint-Colomban et le diocèse de Meaux dans le cadre de ses activités. Aucune information ne sera transmise à un tiers<sup>(1)</sup> *",
+      )}
+
+      <div class="encadre aide">
+        <sup>(1)</sup> Vos données personnelles recueillies légitimement font l'objet d'un
+        traitement informatique uniquement par nos services dans le cadre de votre demande
+        faite auprès de votre paroisse ou du diocèse de Meaux. Conformément au Règlement
+        Général pour la Protection des Données du 18 mai 2018, vous bénéficiez d'un droit de
+        consultation, modification et suppression sur vos informations personnelles. Il peut
+        s'exercer, en vous adressant à l'Evêché :
+        <a href="mailto:rgpd@catho77.fr"><u>rgpd@catho77.fr</u></a>. Vous pouvez également,
+        pour des motifs légitimes, vous opposer au traitement des données personnelles. Cette
+        décision peut cependant compromettre la prise en compte par la paroisse ou le
+        diocèse de votre demande. <u>Le diocèse de Meaux et la paroisse ne procèdent à aucun
+        échange et aucune revente de données à d'autres organismes</u>.
+      </div>
 
       ${grille([
         champTexte('aut.fait_a', 'Fait à (ville)', a.fait_a, { requis: true }),

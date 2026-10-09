@@ -136,6 +136,7 @@ Décharge et autorisations légales.
 - `id` (`uuid`, PK, DEFAULT `gen_random_uuid()`) : Identifiant unique
 - `famille_id` (`uuid`, FK `famille.id` ON DELETE CASCADE, UNIQUE) : 1 décharge par famille
 - `autorise_activites` (`boolean`, NOT NULL DEFAULT true) : Autorisation de participation
+- `autorise_mesures_medicales` (`boolean`, NOT NULL DEFAULT false) : Mesures médicales d'urgence (ajouté par la migration 0003)
 - `consentement_rgpd` (`boolean`, NOT NULL DEFAULT true) : Accord collecte données religieuses
 - `droit_image` (`boolean`, NOT NULL DEFAULT false) : Droit à l'image
 - `fait_a` (`varchar(100)`, NOT NULL) : Ville de signature
@@ -276,6 +277,7 @@ CREATE TABLE autorisation_parentale (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     famille_id UUID NOT NULL REFERENCES famille(id) ON DELETE CASCADE UNIQUE,
     autorise_activites BOOLEAN NOT NULL DEFAULT true,
+    autorise_mesures_medicales BOOLEAN NOT NULL DEFAULT false,
     consentement_rgpd BOOLEAN NOT NULL DEFAULT true,
     droit_image BOOLEAN NOT NULL DEFAULT false,
     fait_a VARCHAR(100) NOT NULL,
