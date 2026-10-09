@@ -24,8 +24,24 @@ export async function rendreDashboard(racine: HTMLElement): Promise<void> {
         .order('date_creation', { ascending: false }),
     ) as DossierSuivi[];
 
+    // Années pour le filtre dédié (libellé unique en base, la vue n'expose
+    // pas l'id). Requête tolérante : sans elle, la page s'affiche en « Toutes ».
+    let anneesDispo: { libelle: string; est_active: boolean }[] = [];
+    try {
+      anneesDispo = siErreur(
+        await supabase
+          .from('annee_scolaire')
+          .select('libelle, est_active')
+          .order('date_debut', { ascending: false }),
+      ) as { libelle: string; est_active: boolean }[];
+    } catch {
+      anneesDispo = [];
+    }
+
     let filtreTexte = '';
     let filtreStatut = '';
+    // Par défaut : l'année scolaire active (toutes si aucune n'est active).
+    let filtreAnnee = anneesDispo.find((a) => a.est_active)?.libelle ?? '';
 
     const filtrees = (): DossierSuivi[] =>
       dossiers.filter((d) => {
@@ -37,7 +53,8 @@ export async function rendreDashboard(racine: HTMLElement): Promise<void> {
           d.email.toLowerCase().includes(t) ||
           d.annee_scolaire.toLowerCase().includes(t);
         const okStatut = !filtreStatut || d.statut_paiement === filtreStatut;
-        return okTexte && okStatut;
+        const okAnnee = !filtreAnnee || d.annee_scolaire === filtreAnnee;
+        return okTexte && okStatut && okAnnee;
       });
 
     const statsHtml = (): string => {
@@ -83,6 +100,16 @@ export async function rendreDashboard(racine: HTMLElement): Promise<void> {
       <div class="filtres no-imprimer">
         <label class="champ"><span>Rechercher</span>
           <input type="search" id="f-texte" placeholder="code, nom, e-mail, année…"/></label>
+        <label class="champ"><span>Année scolaire</span>
+          <select id="f-annee">
+            <option value="">Toutes les années</option>
+            ${anneesDispo
+              .map(
+                (a) =>
+                  `<option value="${echappe(a.libelle)}" ${a.libelle === filtreAnnee ? 'selected' : ''}>${echappe(a.libelle)}${a.est_active ? ' (active)' : ''}</option>`,
+              )
+              .join('')}
+          </select></label>
         <label class="champ"><span>Statut de paiement</span>
           <select id="f-statut">
             <option value="">Tous</option>
@@ -112,6 +139,10 @@ export async function rendreDashboard(racine: HTMLElement): Promise<void> {
 
     qs<HTMLInputElement>('#f-texte', zone).addEventListener('input', (ev) => {
       filtreTexte = (ev.target as HTMLInputElement).value;
+      maj();
+    });
+    qs<HTMLSelectElement>('#f-annee', zone).addEventListener('change', (ev) => {
+      filtreAnnee = (ev.target as HTMLSelectElement).value;
       maj();
     });
     qs<HTMLSelectElement>('#f-statut', zone).addEventListener('change', (ev) => {
