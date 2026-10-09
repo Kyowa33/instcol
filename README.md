@@ -21,6 +21,10 @@ au catéchisme et à l'aumônerie.
 - Tableau de bord : statistiques, recherche/filtres (**année scolaire** — active par
   défaut — et statut de paiement), export **CSV** (respecte les filtres), détail dossier
   (montant encaissé, statut de paiement, notes internes, suppression).
+- **Détail dossier** : modification des informations d'un enfant (état civil,
+  sacrements, santé, groupes / créneaux de l'année) et **suppression d'un enfant**,
+  avec **recalcul automatique du montant total** du dossier (frais de dossier +
+  tarifs des activités, mêmes règles que la RPC d'inscription).
 - **Paramétrage 100 % administrable** : années scolaires (une seule active),
   lieux, activités, niveaux, créneaux (+ niveaux éligibles), tarifs par activité,
   frais de dossier. Tout est paramétrable **par année scolaire**.

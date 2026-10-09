@@ -1,5 +1,6 @@
 import { blocErreur, echappe, qs, toast } from '../../lib/dom';
 import { dateFr, heureFr } from '../../lib/format';
+import { ouvrirModal } from '../../lib/modal';
 import { oublierParametrage } from '../../lib/parametrage';
 import { gardeAdmin } from '../../lib/session';
 import { messageErreur, siErreur, supabase } from '../../lib/supabase';
@@ -291,42 +292,6 @@ function formHtml(cfg: TableCfg, ligne: Ligne | null, niveauxChoisis: Set<string
   const bloc = cfg.speciale === 'creneau' ? blocNiveaux(niveauxChoisis) : '';
   const recopie = cfg.speciale === 'annee' && !ligne ? blocRecopie() : '';
   return `<div class="grille-2">${champs}</div>${recopie}${bloc}`;
-}
-
-function ouvrirModal(
-  titre: string,
-  corps: string,
-  onValider: (voile: HTMLElement) => Promise<void>,
-): void {
-  const voile = document.createElement('div');
-  voile.className = 'voile';
-  voile.innerHTML = `<div class="boite">
-      <h2>${echappe(titre)}</h2>
-      <form id="form-modal">${corps}
-        <div class="btn-groupe">
-          <button type="submit" class="btn btn-primaire">Enregistrer</button>
-          <button type="button" class="btn" data-annuler>Annuler</button>
-        </div>
-      </form>
-    </div>`;
-  document.body.appendChild(voile);
-
-  voile.querySelector('[data-annuler]')?.addEventListener('click', () => voile.remove());
-  voile.addEventListener('click', (ev) => {
-    if (ev.target === voile) voile.remove();
-  });
-  voile.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const form = ev.target as HTMLFormElement;
-    if (!form.reportValidity()) return;
-    const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if (btn) btn.disabled = true;
-    onValider(voile)
-      .catch((e) => {
-        toast(messageErreur(e), 'erreur');
-        if (btn) btn.disabled = false;
-      });
-  });
 }
 
 function lireValeurs(voile: HTMLElement, cfg: TableCfg): Ligne {

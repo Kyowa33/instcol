@@ -1,5 +1,6 @@
 import { blocErreur, echappe, qs, toast } from '../../lib/dom';
 import { dateFr, euros, heureFr, horodatageFr } from '../../lib/format';
+import { ouvrirModal } from '../../lib/modal';
 import { gardeAdmin } from '../../lib/session';
 import { messageErreur, siErreur, supabase } from '../../lib/supabase';
 import type {
@@ -7,6 +8,7 @@ import type {
   Enfant,
   Famille,
   ResponsableLegal,
+  Sexe,
   StatutPaiement,
 } from '../../lib/types';
 import { naviguer } from '../../router';
@@ -25,8 +27,155 @@ interface InscriptionLiee {
   } | null;
 }
 
+/** Créneau proposé dans le formulaire d'édition (créneaux de l'année du dossier). */
+interface CreneauChoix {
+  id: string;
+  jour_semaine: string;
+  horaire_debut: string | null;
+  horaire_fin: string | null;
+  precision_frequence: string | null;
+  activite: { nom: string } | null;
+  lieu: { nom: string } | null;
+}
+
 type EnfantLie = Enfant & { inscription_enfant: InscriptionLiee[] | null };
 type FamilleLiee = Famille & { annee_scolaire: { libelle: string } | null };
+
+function libelleCreneau(c: CreneauChoix): string {
+  const h =
+    c.horaire_debut && c.horaire_fin
+      ? ` ${heureFr(c.horaire_debut)}-${heureFr(c.horaire_fin)}`
+      : '';
+  return `${c.activite?.nom ?? 'Activité'} — ${c.lieu?.nom ?? 'Lieu'} — ${c.jour_semaine}${h}` +
+    `${c.precision_frequence ? ` (${c.precision_frequence})` : ''}`;
+}
+
+function formEnfantHtml(e: EnfantLie, creneaux: CreneauChoix[]): string {
+  const groupesChoisis = new Set(
+    (e.inscription_enfant ?? []).map((i) => i.creneau_groupe?.id ?? ''),
+  );
+  const sante = (e.donnees_extra as { sante?: string } | null)?.sante ?? '';
+  const choixCreneaux = creneaux.length
+    ? `<fieldset><legend>Groupes / créneaux</legend>
+        ${creneaux
+          .map(
+            (c) => `<label class="case"><input type="checkbox" data-creneau value="${echappe(c.id)}"
+              ${groupesChoisis.has(c.id) ? 'checked' : ''}/><span>${echappe(libelleCreneau(c))}</span></label>`,
+          )
+          .join('')}
+      </fieldset>`
+    : '<p class="aide">Aucun créneau paramétré pour cette année.</p>';
+
+  return `<div class="grille-2">
+    <label class="champ"><span>Prénom *</span>
+      <input type="text" name="prenom" required value="${echappe(e.prenom)}"/></label>
+    <label class="champ"><span>Nom *</span>
+      <input type="text" name="nom" required value="${echappe(e.nom)}"/></label>
+    <label class="champ"><span>Sexe</span>
+      <select name="sexe">
+        <option value="M" ${e.sexe === 'M' ? 'selected' : ''}>Garçon</option>
+        <option value="F" ${e.sexe === 'F' ? 'selected' : ''}>Fille</option>
+      </select></label>
+    <label class="champ"><span>Date de naissance *</span>
+      <input type="date" name="date_naissance" required value="${echappe(String(e.date_naissance).slice(0, 10))}"/></label>
+    <label class="champ"><span>Classe fréquentée *</span>
+      <input type="text" name="classe_frequentee" required value="${echappe(e.classe_frequentee)}"/></label>
+    <label class="champ"><span>Établissement</span>
+      <input type="text" name="etablissement" value="${echappe(e.etablissement)}"/></label>
+    <label class="champ"><span>Téléphone enfant</span>
+      <input type="tel" name="telephone_enfant" value="${echappe(e.telephone_enfant ?? '')}"/></label>
+    <label class="champ"><span>Date de 1ʳᵉ communion</span>
+      <input type="date" name="date_communion" value="${echappe(String(e.date_communion ?? '').slice(0, 10))}"/></label>
+  </div>
+  <label class="case"><input type="checkbox" name="est_baptise" ${e.est_baptise ? 'checked' : ''}/>
+    <span>Baptisé(e)</span></label>
+  <label class="case"><input type="checkbox" name="est_confirme" ${e.est_confirme ? 'checked' : ''}/>
+    <span>Confirmé(e)</span></label>
+  <label class="case"><input type="checkbox" name="premiere_communion" ${e.premiere_communion ? 'checked' : ''}/>
+    <span>Première communion</span></label>
+  <label class="champ"><span>Infos santé (allergies, traitements…)</span>
+    <textarea name="sante">${echappe(sante)}</textarea></label>
+  ${choixCreneaux}`;
+}
+
+/** Lit les champs de la modale d'édition d'un enfant. */
+function lireEnfant(
+  voile: HTMLElement,
+): { valeurs: Record<string, unknown>; creneauIds: string[] } {
+  const champ = <T extends Element>(n: string): T | null =>
+    voile.querySelector<T>(`[name="${n}"]`);
+  const val = (n: string): string => {
+    const el = champ<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(n);
+    return el ? el.value.trim() : '';
+  };
+  const coche = (n: string): boolean => champ<HTMLInputElement>(n)?.checked ?? false;
+  return {
+    valeurs: {
+      prenom: val('prenom'),
+      nom: val('nom'),
+      sexe: val('sexe') as Sexe,
+      date_naissance: val('date_naissance'),
+      classe_frequentee: val('classe_frequentee'),
+      etablissement: val('etablissement'),
+      telephone_enfant: val('telephone_enfant') || null,
+      date_communion: val('date_communion') || null,
+      est_baptise: coche('est_baptise'),
+      est_confirme: coche('est_confirme'),
+      premiere_communion: coche('premiere_communion'),
+    },
+    creneauIds: Array.from(
+      voile.querySelectorAll<HTMLInputElement>('input[data-creneau]:checked'),
+    ).map((i) => i.value),
+  };
+}
+
+/**
+ * Recalcule le montant total du dossier comme la RPC `soumettre_inscription` :
+ * frais de dossier fixes + tarif de chaque activité choisie, par enfant.
+ * À rappeler après modification / suppression d'un enfant ou de ses groupes.
+ * Retourne le nouveau total (null si le dossier a disparu).
+ */
+async function recalculerMontant(familleId: string): Promise<number | null> {
+  const famille = siErreur(
+    await supabase.from('famille').select('annee_scolaire_id').eq('id', familleId).maybeSingle(),
+  ) as { annee_scolaire_id: string } | null;
+  if (!famille) return null;
+  const anneeId = famille.annee_scolaire_id;
+
+  const frais = siErreur(
+    await supabase
+      .from('tarif_famille_param')
+      .select('frais_fixe_famille')
+      .eq('annee_scolaire_id', anneeId)
+      .maybeSingle(),
+  ) as { frais_fixe_famille: number } | null;
+
+  const tarifs = siErreur(
+    await supabase
+      .from('tarif_activite')
+      .select('activite_id, montant')
+      .eq('annee_scolaire_id', anneeId),
+  ) as { activite_id: string; montant: number }[];
+  const parActivite = new Map(tarifs.map((t) => [t.activite_id, Number(t.montant)]));
+
+  const enfants = siErreur(
+    await supabase
+      .from('enfant')
+      .select('id, inscription_enfant(creneau_groupe(activite_id))')
+      .eq('famille_id', familleId),
+  ) as unknown as {
+    inscription_enfant: { creneau_groupe: { activite_id: string } | null }[] | null;
+  }[];
+
+  let total = Number(frais?.frais_fixe_famille ?? 0);
+  for (const e of enfants) {
+    for (const i of e.inscription_enfant ?? []) {
+      total += parActivite.get(i.creneau_groupe?.activite_id ?? '') ?? 0;
+    }
+  }
+  siErreur(await supabase.from('famille').update({ montant_total: total }).eq('id', familleId));
+  return total;
+}
 
 export async function rendreDossier(racine: HTMLElement, id: string): Promise<void> {
   if (!(await gardeAdmin())) return;
@@ -70,7 +219,7 @@ export async function rendreDossier(racine: HTMLElement, id: string): Promise<vo
       .join('');
 
     const lignesEnfants = enfants
-      .map((e) => {
+      .map((e, i) => {
         const groupes = (e.inscription_enfant ?? [])
           .map((i) => {
             const cg = i.creneau_groupe;
@@ -94,6 +243,10 @@ export async function rendreDossier(racine: HTMLElement, id: string): Promise<vo
           <td>${echappe(e.telephone_enfant ?? '—')}</td>
           <td>${groupes || '—'}</td>
           <td>${sante ? echappe(sante) : '—'}</td>
+          <td class="num no-imprimer">
+            <button type="button" class="btn btn-petit" data-enfant-modifier="${i}">Modifier</button>
+            <button type="button" class="btn btn-petit btn-danger" data-enfant-supprimer="${i}">Supprimer</button>
+          </td>
         </tr>`;
       })
       .join('');
@@ -140,8 +293,9 @@ export async function rendreDossier(racine: HTMLElement, id: string): Promise<vo
             <thead><tr>
               <th>Enfant</th><th>Naissance</th><th>Classe</th><th>Sacrements</th>
               <th>Portable</th><th>Groupe(s)</th><th>Santé</th>
+              <th class="num no-imprimer">Actions</th>
             </tr></thead>
-            <tbody>${lignesEnfants || '<tr><td colspan="7">Aucun enfant.</td></tr>'}</tbody>
+            <tbody>${lignesEnfants || '<tr><td colspan="8">Aucun enfant.</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -206,6 +360,101 @@ export async function rendreDossier(racine: HTMLElement, id: string): Promise<vo
           toast(messageErreur(e), 'erreur');
         }
       })();
+    });
+
+    // Modification d'un enfant (informations + groupes) et suppression.
+    zone.querySelectorAll<HTMLButtonElement>('button[data-enfant-modifier]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const enfant = enfants[Number(b.dataset.enfantModifier)];
+        if (!enfant) return;
+        void (async () => {
+          try {
+            const creneaux = siErreur(
+              await supabase
+                .from('creneau_groupe')
+                .select(
+                  'id, jour_semaine, horaire_debut, horaire_fin, precision_frequence, activite(nom), lieu(nom)',
+                )
+                .eq('annee_scolaire_id', famille.annee_scolaire_id)
+                .order('jour_semaine'),
+            ) as unknown as CreneauChoix[];
+
+            ouvrirModal(
+              `Modifier — ${enfant.prenom} ${enfant.nom}`,
+              formEnfantHtml(enfant, creneaux),
+              async (voile) => {
+                const { valeurs, creneauIds } = lireEnfant(voile);
+                // Conserve les autres clés éventuelles de donnees_extra.
+                const donneesExtra = {
+                  ...((enfant.donnees_extra as Record<string, unknown> | null) ?? {}),
+                  sante: String(voile.querySelector<HTMLTextAreaElement>('[name="sante"]')?.value ?? '').trim() || null,
+                };
+                siErreur(
+                  await supabase
+                    .from('enfant')
+                    .update({ ...valeurs, donnees_extra: donneesExtra })
+                    .eq('id', enfant.id),
+                );
+                // Les groupes sont remplacés par la sélection courante.
+                siErreur(
+                  await supabase.from('inscription_enfant').delete().eq('enfant_id', enfant.id),
+                );
+                if (creneauIds.length) {
+                  siErreur(
+                    await supabase.from('inscription_enfant').insert(
+                      creneauIds.map((c) => ({
+                        enfant_id: enfant.id,
+                        creneau_groupe_id: c,
+                      })),
+                    ),
+                  );
+                }
+                voile.remove();
+                const total = await recalculerMontant(id);
+                toast(
+                  total !== null
+                    ? `Enfant mis à jour — montant total : ${euros(total)}.`
+                    : 'Enfant mis à jour.',
+                  'succes',
+                );
+                await rendreDossier(racine, id);
+              },
+            );
+          } catch (e) {
+            toast(messageErreur(e), 'erreur');
+          }
+        })();
+      });
+    });
+
+    zone.querySelectorAll<HTMLButtonElement>('button[data-enfant-supprimer]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const enfant = enfants[Number(b.dataset.enfantSupprimer)];
+        if (!enfant) return;
+        if (
+          !window.confirm(
+            `Supprimer définitivement ${enfant.prenom} ${enfant.nom} de ce dossier ?\n` +
+              'Ses inscriptions aux groupes seront également supprimées.',
+          )
+        )
+          return;
+        void (async () => {
+          try {
+            const { error } = await supabase.from('enfant').delete().eq('id', enfant.id);
+            if (error) throw new Error(error.message);
+            const total = await recalculerMontant(id);
+            toast(
+              total !== null
+                ? `Enfant supprimé — montant total : ${euros(total)}.`
+                : 'Enfant supprimé.',
+              'succes',
+            );
+            await rendreDossier(racine, id);
+          } catch (e) {
+            toast(messageErreur(e), 'erreur');
+          }
+        })();
+      });
     });
   } catch (e) {
     zone.innerHTML = blocErreur(messageErreur(e));
