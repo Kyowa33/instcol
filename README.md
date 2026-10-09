@@ -27,6 +27,10 @@ au catéchisme et à l'aumônerie.
 - **Filtrage par année** sur les onglets paramétrés par année (créneaux, tarifs,
   frais de dossier) : le tableau n'affiche que les éléments de l'année choisie
   (année active par défaut, ou « Toutes les années »).
+- **Rubrique « Groupes »** : vue des groupes d'enfants par activité / lieu / jour /
+  horaire (enfants inscrits, niveaux, effectif, capacité), filtrable (année — active
+  par défaut —, activité, lieu, recherche enfant / code dossier) et **exportable en
+  CSV** (une ligne par enfant).
 - **Recopie du paramétrage à la création d'une année** : l'administrateur est invité
   (case cochée par défaut) à reprendre créneaux, niveaux éligibles, tarifs et frais de
   dossier de l'année active, puis à ajuster si besoin.

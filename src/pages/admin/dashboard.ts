@@ -1,4 +1,5 @@
 import { blocErreur, echappe, qs, toast } from '../../lib/dom';
+import { telechargerCsv } from '../../lib/csv';
 import { euros, horodatageFr } from '../../lib/format';
 import { gardeAdmin } from '../../lib/session';
 import { messageErreur, siErreur, supabase } from '../../lib/supabase';
@@ -182,14 +183,6 @@ function exporterCsv(lignes: DossierSuivi[]): void {
     d.statut_paiement,
     d.annee_scolaire,
   ]);
-  const csv = [entetes, ...corps]
-    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';'))
-    .join('\r\n');
-  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `dossiers-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  telechargerCsv(`dossiers-${new Date().toISOString().slice(0, 10)}.csv`, entetes, corps);
 }
 

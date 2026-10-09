@@ -6,6 +6,7 @@ import { rendreInscription } from './pages/inscription';
 import { rendreConnexion } from './pages/admin/connexion';
 import { rendreDashboard } from './pages/admin/dashboard';
 import { rendreDossier } from './pages/admin/dossier';
+import { rendreGroupes } from './pages/admin/groupes';
 import { rendreParametrage } from './pages/admin/parametrage';
 import { rendreNouveauMotDePasse } from './pages/admin/motdepasse';
 
@@ -32,6 +33,7 @@ const routes: Route[] = [
   { motif: /^\/admin\/login$/, rendu: () => rendreConnexion(racine) },
   { motif: /^\/admin\/nouveau-mot-de-passe$/, rendu: () => rendreNouveauMotDePasse(racine) },
   { motif: /^\/admin\/dossier\/([^/]+)$/, rendu: (m) => rendreDossier(racine, m[1]) },
+  { motif: /^\/admin\/groupes$/, rendu: () => rendreGroupes(racine) },
   { motif: /^\/admin\/parametrage$/, rendu: () => rendreParametrage(racine) },
 ];
 

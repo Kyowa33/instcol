@@ -429,6 +429,8 @@ async function recopierParametrage(sourceId: string, cibleId: string): Promise<n
   return n;
 }
 
+/* (L'export CSV des groupes est désormais dans la rubrique Groupes — pages/admin/groupes.ts) */
+
 interface ResultatEnregistrement {
   /** Nombre d'éléments recopiés depuis l'année active (0 si aucune recopie). */
   recopie: number;
