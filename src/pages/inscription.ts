@@ -11,7 +11,7 @@ import {
   type EtatEnfant,
   type EtatInscription,
 } from '../lib/inscription';
-import { chargerParametrage, oublierParametrage, type Parametrage } from '../lib/parametrage';
+import { chargerParametrage, ErreurAnneesInactives, oublierParametrage, type Parametrage } from '../lib/parametrage';
 import { messageErreur } from '../lib/supabase';
 import { calculerFrais, type EnfantAvecCreneaux } from '../lib/tarifs';
 import { naviguer } from '../router';
@@ -36,6 +36,18 @@ export async function rendreInscription(racine: HTMLElement): Promise<void> {
   try {
     p = await chargerParametrage();
   } catch (e) {
+    if (e instanceof ErreurAnneesInactives) {
+      // Aucune année active : message simple, sans jargon ni bouton.
+      racine.innerHTML = `${barreNavigation('inscription')}
+        ${enteteHeros("Formulaire d'inscription", 'Éveil à la foi, catéchisme, aumônerie')}
+        <div class="conteneur conteneur-etroit">
+          <div class="carte">
+            <p>Les inscriptions sont actuellement fermées. Pour toute demande,
+            veuillez vous rapprocher des responsables de la paroisse.</p>
+          </div>
+        </div>`;
+      return;
+    }
     racine.innerHTML = `${barreNavigation('inscription')}
       ${enteteHeros("Formulaire d'inscription", 'Éveil à la foi, catéchisme, aumônerie')}
       <div class="conteneur conteneur-etroit">

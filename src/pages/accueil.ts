@@ -1,6 +1,6 @@
 import { blocErreur, echappe } from '../lib/dom';
 import { euros, plageHeures } from '../lib/format';
-import { chargerParametrage, type Parametrage } from '../lib/parametrage';
+import { chargerParametrage, ErreurAnneesInactives, type Parametrage } from '../lib/parametrage';
 import type { CreneauAvecNiveaux } from '../lib/parametrage';
 import { barreNavigation, enteteHeros } from './entete';
 
@@ -115,6 +115,22 @@ export async function rendreAccueil(racine: HTMLElement): Promise<void> {
         </div>
       </div>`;
   } catch (e) {
+    if (e instanceof ErreurAnneesInactives) {
+      // Aucune année active : message simple pour les parents, sans jargon
+      // technique ni bouton (l'utilisateur est déjà sur la page).
+      racine.innerHTML = `${barreNavigation('accueil')}
+        ${enteteHeros(
+          'Paroisse Saint-Colomban',
+          'Éveil à la foi, catéchisme et aumônerie — inscriptions de l\'année scolaire',
+        )}
+        <div class="conteneur">
+          <div class="carte">
+            <p>Les inscriptions sont actuellement fermées. Pour toute demande,
+            veuillez vous rapprocher des responsables de la paroisse.</p>
+          </div>
+        </div>`;
+      return;
+    }
     racine.innerHTML = `${barreNavigation('accueil')}
       ${enteteHeros('Institutions Saint-Colomban', 'Inscriptions paroissiales')}
       <div class="conteneur">${blocErreur(e instanceof Error ? e.message : String(e))}</div>`;
