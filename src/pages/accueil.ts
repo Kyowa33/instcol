@@ -82,7 +82,6 @@ export async function rendreAccueil(racine: HTMLElement): Promise<void> {
             </div>
             <div class="btn-groupe no-imprimer" style="margin-top:0">
               <a class="btn btn-primaire" href="#/inscription">Commencer l'inscription</a>
-              <a class="btn" href="#/admin">Espace administrateur</a>
             </div>
           </div>
         </div>
@@ -106,7 +105,7 @@ export async function rendreAccueil(racine: HTMLElement): Promise<void> {
           <h2>Frais d'inscription</h2>
           <div class="tableau-enveloppe">
             <table class="tableau">
-              <thead><tr><th>Poste</th><th class="num">Montant</th></tr></thead>
+              <thead><tr><th>Description</th><th class="num">Montant</th></tr></thead>
               <tbody>${lignesTarifs(p)}</tbody>
             </table>
           </div>
