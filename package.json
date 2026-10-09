@@ -1,0 +1,24 @@
+{
+  "name": "instcol",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Institutions Saint-Colomban — Gestion des inscriptions paroissiales (app statique + Supabase)",
+  "scripts": {
+    "dev": "vite",
+    "build": "bun x tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "bun x tsc --noEmit",
+    "check:sql": "bun scripts/verifier-sql.ts",
+    "test:sql": "bun scripts/tester-sql.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "pgsql-parser": "^18.2.10",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0"
+  }
+}

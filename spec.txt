@@ -1,0 +1,79 @@
+Factorise et rend totalement paramétrique  le modèle de données du projet décrit ici.
+Il s'agit d'une application web statique (avec supabase) de gestion des inscriptions de la paroisse St Colomban.
+
+Ci-dessous un exemple des données à renseigner.
+Il faut que toutes les activités/niveaux/lieux soient paramétrables pour chaque année scolaire (Septembre année A -> Juin année A+1).
+Il y aura 2 administrateurs qui devront avoir une vue partagée des données (supabase avec le plan free)
+Il doit y avoir la possibilité pour les parents de remplir le formulaire en ligne.
+Pose des questions sur les points flous / oubliés.
+----------------------
+1. Etat civil des enfants (1 par enfant)
+- Prénom et nom
+- Date de naissance
+- Sexe
+- Classe et établissement fréquenté
+- Portable de l'enfant (s'il en possède un)
+- Baptisé(e) ?
+- Confirmé(e) ?
+- 1ère communion ? (si oui, préciser la date)
+- Inscription (précisez le groupe, cf tableaux ci-dessous)
+
+Tableaux de planning
+
+Eveil à la foi (maternelle - CP) : à Bailly-Romainvilliers (ou exceptionnellement à l'église de Bailly), 1 dimanche / mois de 16h00-17h00
+
+	Bailly-R	Chessy	Magny-le-H.	Serris	Villeneuve-le-C.	Coupvray
+
+KT CE1	Samedi 10h00 à 11h00
+
+KT CE2 à CM2	Mercredi 11h00-12h00 ; Samedi 10h00-11h00	Mercredi 17h30-19h00	Samedi 10h00-11h00	Mercredi 17h00-18h00	Mercredi 09h45-10h45	Samedi 10h00-11h00
+
+KT 6ème	Vendredi 17h30-18h30
+
+Aumônerie 5ème	Le vendredi soir à l'institution St Colomban
+
+Aumônerie 4ème/3ème	Le vendredi soir à l'institution St Colomban
+
+Aumônerie Lycéen	Le vendredi soir à l'institution St Colomban
+
+
+2. Personnes exerçant l'autorité parentale
+- Prénom et Nom
+- Adresse
+- Portable
+- Email
+
+
+3. Frais d'inscription 
+35€ (frais d'inscription par famille)
++5€ * ... (nombre d'enfants inscrits à l'éveil à la foi)
++20€ * ... (nombre d'enfants inscrits au catéchisme ou à l'aumônerie)
+= ... €
+
+Je choisis de régler les frais d'inscription par :
+[ ] Chèque (ordre : Paroisse Saint-Colomban)   N° du chèque : .....  Banque : .....
+[ ] Espèces
+
+
+4. Autorisation de décharge parentale
+
+Je soussigné(e) .......
+
+- autorise mon (mes) enfant(s), sus désigné(s), à participer aux activités organisées dans le cadre de l'éveil à la foi, du catéchisme ou de l'aumônerie (rencontres, temps forts, célébrations, sorties...)
+- etc..
+
+Fait à ... Date : ...  Signature : ...
+----------------------
+
+
+Jauges / Capacité max : Faut-il bloquer automatiquement un créneau/groupe dès qu'il atteint un nombre maximal d'inscrits ?
+-> Ne pas bloquer mais indiquer sur le formulaire le nombre d'inscrits
+
+Paiement en ligne : Souhaitez-vous intégrer le paiement immédiat par CB via HelloAsso (sans frais pour la paroisse) en plus des chèques/espèces ?
+-> Non
+
+Attestation / Validation : Faut-il générer un mail automatique de confirmation avec le récapitulatif PDF signé à la fin du formulaire ?
+-> Oui
+
+RGPD / Données sensibles : La collecte des données sur les sacrements nécessite l'accord explicite des parents. Doit-on ajouter une case de consentement RGPD dédiée ?
+-> Oui

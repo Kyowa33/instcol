@@ -1,0 +1,259 @@
+/* ===========================================================================
+   Institutions Saint-Colomban — feuille de style unique
+   =========================================================================== */
+:root {
+  --bleu: #1e3a8a;
+  --bleu-2: #2d53c8;
+  --bleu-clair: #eaf0ff;
+  --fond: #f5f7fb;
+  --texte: #1f2937;
+  --gris: #6b7280;
+  --bord: #e5e7eb;
+  --blanc: #ffffff;
+  --vert: #047857;
+  --vert-clair: #ecfdf5;
+  --rouge: #b91c1c;
+  --rouge-clair: #fef2f2;
+  --orange: #b45309;
+  --orange-clair: #fffbeb;
+  --rayon: 10px;
+  --ombre: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+h1, h2, h3 { line-height: 1.25; color: var(--bleu); margin: 0 0 0.6em; }
+h1 { font-size: 1.7rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.05rem; }
+p { margin: 0 0 0.8em; }
+a { color: var(--bleu-2); }
+code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+.chargement { text-align: center; padding: 4rem 1rem; color: var(--gris); }
+.aide { color: var(--gris); font-size: 0.92rem; }
+
+/* --- Structure ----------------------------------------------------------- */
+.conteneur { max-width: 1040px; margin: 0 auto; padding: 24px 16px 72px; }
+.conteneur-etroit { max-width: 760px; }
+.carte {
+  background: var(--blanc);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.grille-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.flex-entre { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* --- En-tête ------------------------------------------------------------- */
+.entete {
+  background: linear-gradient(135deg, var(--bleu) 0%, var(--bleu-2) 100%);
+  color: #fff;
+  padding: 34px 16px 28px;
+  text-align: center;
+}
+.entete h1 { color: #fff; margin-bottom: 0.3em; }
+.entete p { color: #dbe4ff; margin: 0 auto; max-width: 720px; }
+.entete .sous-titre { font-size: 1.05rem; }
+
+.barre {
+  background: var(--blanc);
+  border-bottom: 1px solid var(--bord);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.barre .marque { font-weight: 700; color: var(--bleu); text-decoration: none; }
+.barre nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.barre nav a {
+  text-decoration: none;
+  color: var(--texte);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+}
+.barre nav a:hover { background: var(--bleu-clair); color: var(--bleu); }
+.barre nav a.actif { background: var(--bleu); color: #fff; }
+
+/* --- Boutons ------------------------------------------------------------- */
+.btn {
+  display: inline-block;
+  border: 1px solid var(--bord);
+  background: var(--blanc);
+  color: var(--texte);
+  padding: 9px 18px;
+  border-radius: var(--rayon);
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+.btn:hover { filter: brightness(0.97); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primaire { background: var(--bleu); border-color: var(--bleu); color: #fff; font-weight: 600; }
+.btn-primaire:hover { background: var(--bleu-2); filter: none; }
+.btn-succes { background: var(--vert); border-color: var(--vert); color: #fff; font-weight: 600; }
+.btn-danger { background: var(--rouge); border-color: var(--rouge); color: #fff; }
+.btn-petit { padding: 5px 10px; font-size: 0.88rem; border-radius: 7px; }
+.btn-discret { border: none; background: transparent; color: var(--bleu-2); padding: 4px 6px; }
+.btn-groupe { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* --- Formulaires --------------------------------------------------------- */
+.champ { display: block; margin-bottom: 13px; }
+.champ > span {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.champ input, .champ select, .champ textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+  color: var(--texte);
+}
+.champ input:focus, .champ select:focus, .champ textarea:focus {
+  outline: 2px solid var(--bleu-clair);
+  border-color: var(--bleu-2);
+}
+.champ textarea { min-height: 84px; resize: vertical; }
+.case { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 9px; font-size: 0.97rem; }
+.case input { margin-top: 4px; width: 17px; height: 17px; flex: none; }
+.case span small { display: block; color: var(--gris); }
+fieldset { border: 1px solid var(--bord); border-radius: var(--rayon); padding: 14px 16px 6px; margin: 0 0 16px; }
+legend { font-weight: 700; color: var(--bleu); padding: 0 6px; font-size: 0.98rem; }
+.masque { display: none !important; }
+
+/* --- Tables -------------------------------------------------------------- */
+.tableau { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.tableau th, .tableau td { padding: 9px 10px; border-bottom: 1px solid var(--bord); text-align: left; }
+.tableau th { background: #f1f4f9; color: #334155; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.tableau tr:hover td { background: #f8fafc; }
+.tableau .num { text-align: right; white-space: nowrap; }
+.tableau-enveloppe { overflow-x: auto; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--bleu-clair);
+  color: var(--bleu);
+}
+.badge-vert { background: var(--vert-clair); color: var(--vert); }
+.badge-orange { background: var(--orange-clair); color: var(--orange); }
+.badge-gris { background: #eef2f7; color: var(--gris); }
+
+/* --- Assistant d'inscription (étapes) ------------------------------------ */
+.etapes { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 18px; flex-wrap: wrap; }
+.etapes li {
+  flex: 1 1 150px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #eef1f6;
+  color: var(--gris);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+}
+.etapes li.active { background: var(--bleu); color: #fff; }
+.etapes li.fait { background: var(--bleu-clair); color: var(--bleu); }
+
+.carte-enfant { border-top: 3px solid var(--bleu-2); }
+.carte-enfant .titre-enfant {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.creneaux { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+.creneau {
+  display: flex; gap: 9px; align-items: flex-start;
+  border: 1px solid var(--bord); border-radius: 8px; padding: 9px 11px; background: #fff;
+}
+.creneau input { margin-top: 4px; width: 17px; height: 17px; flex: none; }
+.creneau .info { font-size: 0.9rem; }
+.creneau .info strong { display: block; color: var(--bleu); }
+.creneau .compte { color: var(--gris); font-size: 0.82rem; }
+.creneau .compte.complet { color: var(--orange); font-weight: 600; }
+
+.resume-frais { background: var(--bleu-clair); border: 1px solid #c7d4ff; }
+.resume-frais table { width: 100%; border-collapse: collapse; }
+.resume-frais td { padding: 6px 4px; font-size: 0.95rem; }
+.resume-frais td:last-child { text-align: right; white-space: nowrap; }
+.resume-frais tr.total td { border-top: 2px solid var(--bleu); font-weight: 700; color: var(--bleu); }
+
+.encadre {
+  background: var(--orange-clair); border: 1px solid #fde68a; border-radius: 8px;
+  padding: 12px 14px; font-size: 0.95rem; margin-bottom: 14px;
+}
+.succes-palette { background: var(--vert-clair); border: 1px solid #a7f3d0; }
+.erreur-palette { background: var(--rouge-clair); border: 1px solid #fecaca; }
+
+/* --- Toasts -------------------------------------------------------------- */
+#toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+.toast {
+  background: #111827; color: #fff; padding: 11px 16px; border-radius: 8px;
+  box-shadow: var(--ombre); font-size: 0.94rem; max-width: 360px;
+  animation: apparition 0.2s ease;
+}
+.toast-succes { background: var(--vert); }
+.toast-erreur { background: var(--rouge); }
+@keyframes apparition { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+/* --- Espace admin -------------------------------------------------------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat { background: var(--blanc); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 14px 16px; }
+.stat .valeur { font-size: 1.55rem; font-weight: 700; color: var(--bleu); }
+.stat .libelle { color: var(--gris); font-size: 0.85rem; }
+.onglets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 2px solid var(--bord); }
+.onglets button {
+  border: none; background: transparent; padding: 9px 14px; font: inherit; cursor: pointer;
+  color: var(--gris); border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 600;
+}
+.onglets button.actif { color: var(--bleu); border-bottom-color: var(--bleu); }
+.filtres { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: end; }
+.filtres .champ { margin-bottom: 0; min-width: 180px; }
+
+.voile {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+}
+.boite {
+  background: #fff; border-radius: var(--rayon); padding: 22px 24px; width: min(560px, 100%);
+  max-height: 90vh; overflow: auto; box-shadow: var(--ombre);
+}
+.ligne-info { display: flex; gap: 8px; font-size: 0.95rem; margin-bottom: 6px; }
+.ligne-info strong { min-width: 190px; color: var(--gris); font-weight: 600; }
+
+/* --- Impression (récapitulatif PDF via « Imprimer ») --------------------- */
+@media print {
+  body { background: #fff; }
+  .barre, #toasts, .no-imprimer { display: none !important; }
+  .conteneur { padding: 0; max-width: none; }
+  .carte { box-shadow: none; border: none; padding: 0; }
+  .entete { background: #fff; color: #000; padding: 0 0 12px; text-align: left; }
+  .entete h1, .entete p, .entete .sous-titre { color: #000; }
+  a { color: #000; text-decoration: none; }
+}
+
