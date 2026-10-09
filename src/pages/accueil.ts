@@ -58,7 +58,7 @@ function lignesTarifs(p: Parametrage): string {
 export async function rendreAccueil(racine: HTMLElement): Promise<void> {
   racine.innerHTML = `${barreNavigation('accueil')}
     ${enteteHeros(
-      'Institutions Saint-Colomban',
+      'Paroisse Saint-Colomban',
       'Éveil à la foi, catéchisme et aumônerie — inscriptions de l\'année scolaire',
     )}
     <div class="conteneur"><p class="chargement">Chargement du planning…</p></div>`;
@@ -68,7 +68,7 @@ export async function rendreAccueil(racine: HTMLElement): Promise<void> {
 
     racine.innerHTML = `${barreNavigation('accueil')}
       ${enteteHeros(
-        'Institutions Saint-Colomban',
+        'Paroisse Saint-Colomban',
         `Inscriptions ${echappe(p.annee.libelle)} — éveil à la foi, catéchisme et aumônerie`,
       )}
       <div class="conteneur">
