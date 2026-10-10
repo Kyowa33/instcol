@@ -29,6 +29,12 @@ au catéchisme et à l'aumônerie.
   admin, **ajout** (e-mail + mot de passe), **réinitialisation de mot de passe**,
   **suppression** — la suppression du compte connecté est **refusée côté serveur**
   (via l'Edge Function `gestion-admins`).
+- **Rubrique « Backup »** (technique) : export **SQL gzippé** de toutes les
+  données, prêt à être rejoué dans l'éditeur SQL Supabase pour restaurer la
+  base. Filtre par année (« Toutes les années » par défaut) : en mode complet,
+  le script démarre par un `TRUNCATE` de toutes les tables puis ré-insère tout
+  (données seules, **sans DDL**, ordre des clés étrangères respecté ; comptes
+  Supabase Auth hors périmètre).
 - **Paramétrage 100 % administrable** : années scolaires (une seule active),
   lieux, activités, niveaux, créneaux (+ niveaux éligibles), tarifs par activité,
   frais de dossier. Tout est paramétrable **par année scolaire**.

@@ -8,7 +8,7 @@ import { deconnexion, emailConnecte } from '../../lib/session';
 export function coqueAdmin(
   racine: HTMLElement,
   titre: string,
-  actif: 'dossiers' | 'groupes' | 'utilisateurs' | 'parametrage',
+  actif: 'dossiers' | 'groupes' | 'utilisateurs' | 'parametrage' | 'backup',
 ): HTMLElement {
   racine.innerHTML = `<div class="barre">
       <a class="marque" href="#/">Paroisse Saint-Colomban — administration</a>
@@ -17,6 +17,7 @@ export function coqueAdmin(
         <a href="#/admin/groupes" class="${actif === 'groupes' ? 'actif' : ''}">Groupes</a>
         <a href="#/admin/utilisateurs" class="${actif === 'utilisateurs' ? 'actif' : ''}">Utilisateurs</a>
         <a href="#/admin/parametrage" class="${actif === 'parametrage' ? 'actif' : ''}">Paramétrage</a>
+        <a href="#/admin/backup" class="${actif === 'backup' ? 'actif' : ''}">Backup</a>
         <a href="#/">Site public</a>
         <a href="#/admin/login" id="lien-deconnexion">Déconnexion</a>
       </nav>
