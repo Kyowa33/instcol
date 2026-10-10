@@ -25,6 +25,10 @@ au catéchisme et à l'aumônerie.
   sacrements, santé, groupes / créneaux de l'année) et **suppression d'un enfant**,
   avec **recalcul automatique du montant total** du dossier (frais de dossier +
   tarifs des activités, mêmes règles que la RPC d'inscription).
+- **Gestion des utilisateurs** (rubrique « Utilisateurs ») : liste des comptes
+  admin, **ajout** (e-mail + mot de passe), **réinitialisation de mot de passe**,
+  **suppression** — la suppression du compte connecté est **refusée côté serveur**
+  (via l'Edge Function `gestion-admins`).
 - **Paramétrage 100 % administrable** : années scolaires (une seule active),
   lieux, activités, niveaux, créneaux (+ niveaux éligibles), tarifs par activité,
   frais de dossier. Tout est paramétrable **par année scolaire**.
@@ -71,6 +75,20 @@ bun run test:sql            # exécute les 2 migrations + RPC + RLS sur PostgreS
 supabase functions secrets set RESEND_API_KEY=re_xxx EMAIL_FROM="Paroisse Saint-Colomban <inscriptions@exemple.fr>"
 supabase functions deploy envoi-confirmation
 ```
+
+## Gestion des utilisateurs admin (Edge Function)
+
+La création / réinitialisation / suppression des comptes Supabase Auth exige la
+clé `service_role` : elle est réalisée par l'Edge Function `gestion-admins`
+(appelée avec le JWT de l'admin connecté, qui doit être présent dans
+`admin_users`). La suppression du compte connecté est refusée côté serveur.
+
+```bash
+supabase functions deploy gestion-admins
+```
+
+La clé `SUPABASE_SERVICE_ROLE_KEY` est déjà fournie automatiquement à l'Edge
+Function par Supabase (secret en place via `envoi-confirmation`).
 
 - Le service [Resend](https://resend.com) offre un plan gratuit (100 e-mails/jour).
 - Sans ces secrets, l'inscription fonctionne toujours : la page de confirmation
