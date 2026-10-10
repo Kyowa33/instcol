@@ -9,6 +9,8 @@ import { rendreDossier } from './pages/admin/dossier';
 import { rendreGroupes } from './pages/admin/groupes';
 import { rendreParametrage } from './pages/admin/parametrage';
 import { rendreNouveauMotDePasse } from './pages/admin/motdepasse';
+import { rendreUtilisateurs } from './pages/admin/utilisateurs';
+import { rendreBackup } from './pages/admin/backup';
 
 const racine = document.getElementById('app');
 if (!racine) throw new Error("Élément racine '#app' introuvable dans index.html");
@@ -34,6 +36,8 @@ const routes: Route[] = [
   { motif: /^\/admin\/nouveau-mot-de-passe$/, rendu: () => rendreNouveauMotDePasse(racine) },
   { motif: /^\/admin\/dossier\/([^/]+)$/, rendu: (m) => rendreDossier(racine, m[1]) },
   { motif: /^\/admin\/groupes$/, rendu: () => rendreGroupes(racine) },
+  { motif: /^\/admin\/utilisateurs$/, rendu: () => rendreUtilisateurs(racine) },
+  { motif: /^\/admin\/backup$/, rendu: () => rendreBackup(racine) },
   { motif: /^\/admin\/parametrage$/, rendu: () => rendreParametrage(racine) },
 ];
 
