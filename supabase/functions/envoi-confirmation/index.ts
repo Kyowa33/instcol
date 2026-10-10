@@ -42,7 +42,7 @@ interface Recap {
   responsables: string[];
   coordonnees: string;
   enfants: { identite: string; detail: string; groupes: string[] }[];
-  autorisation: { faitA: string; nom: string; date: string; rgpd: boolean; droitImage: boolean } | null;
+  autorisation: { faitA: string; nom: string; date: string; rgpd: boolean; mesuresMedicales: boolean; droitImage: boolean } | null;
 }
 
 Deno.serve(async (req) => {
@@ -134,6 +134,7 @@ Deno.serve(async (req) => {
             nom: autorisation.nom_signataire,
             date: autorisation.date_signature,
             rgpd: autorisation.consentement_rgpd,
+            mesuresMedicales: autorisation.autorise_mesures_medicales,
             droitImage: autorisation.droit_image,
           }
         : null,
@@ -220,6 +221,7 @@ function construireHtml(r: Recap): string {
   </table>
   ${r.autorisation ? `<p style="font-size:12px;color:#6b7280;">Décharge signée par ${echappe(r.autorisation.nom)}
      à ${echappe(r.autorisation.faitA)} — RGPD : ${r.autorisation.rgpd ? 'accepté' : 'refusé'} —
+     mesures médicales d'urgence : ${r.autorisation.mesuresMedicales ? 'autorisées' : 'refusées'} —
      droit à l'image : ${r.autorisation.droitImage ? 'oui' : 'non'}.</p>` : ''}
   <p style="font-size:12px;color:#6b7280;">Ce message est envoyé automatiquement, merci de ne pas y répondre.</p>
 </body></html>`;
@@ -307,7 +309,7 @@ async function construirePdf(r: Recap): Promise<Uint8Array> {
   if (r.autorisation) {
     texte(`Fait à ${r.autorisation.faitA}, le ${new Date(r.autorisation.date).toLocaleString('fr-FR')}`);
     texte(`Signature : ${r.autorisation.nom}`);
-    texte(`Consentement RGPD : ${r.autorisation.rgpd ? 'oui' : 'non'} — Droit à l’image : ${r.autorisation.droitImage ? 'oui' : 'non'}`);
+    texte(`Consentement RGPD : ${r.autorisation.rgpd ? 'oui' : 'non'} — Mesures médicales : ${r.autorisation.mesuresMedicales ? 'oui' : 'non'} — Droit à l’image : ${r.autorisation.droitImage ? 'oui' : 'non'}`);
   }
   saut(12);
   texte('Document généré automatiquement par la plateforme d’inscription de la Paroisse Saint-Colomban.', {

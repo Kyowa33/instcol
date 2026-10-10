@@ -45,6 +45,8 @@ console.log('— Migration 0001_init.sql —');
 await db.exec(await lire('0001_init.sql'));
 console.log('— Migration 0002_seed.sql —');
 await db.exec(await lire('0002_seed.sql'));
+console.log('— Migration 0003_autorisations_etendues.sql —');
+await db.exec(await lire('0003_autorisations_etendues.sql'));
 
 // Privilèges par défaut (équivalent des privileges par defaut Supabase)
 await db.exec(`
@@ -106,7 +108,8 @@ const donnees = {
   banque_cheque: 'Banque Postale',
   commentaire_famille: 'Test de soumission',
   autorisations: {
-    autorise_activites: true, consentement_rgpd: true, droit_image: false,
+    autorise_activites: true, autorise_mesures_medicales: true,
+    consentement_rgpd: true, droit_image: true,
     fait_a: 'Bailly-Romainvilliers', nom_signataire: 'Marie DURAND',
   },
 };
@@ -118,7 +121,7 @@ const res1 = await db.query<Ligne>('SELECT soumettre_inscription($1::jsonb) AS r
   JSON.stringify(donnees),
 ]);
 const inscription1 = res1.rows[0].res;
-verifie(inscription1.code_dossier === 'STC-2025-001', `code dossier 1 = ${inscription1.code_dossier}`);
+verifie(inscription1.code_dossier === 'STC-2027-001', `code dossier 1 = ${inscription1.code_dossier}`);
 verifie(
   Number(inscription1.montant_total) === 55,
   `frais calculés = ${inscription1.montant_total} € (35 + 20 attendus)`,
@@ -130,7 +133,7 @@ await db.exec('SET ROLE anon');
 const res2 = await db.query<Ligne>('SELECT soumettre_inscription($1::jsonb) AS res', [
   JSON.stringify(donnees),
 ]);
-verifie(res2.rows[0].res.code_dossier === 'STC-2025-002', 'code dossier 2 séquencé (concurrence)');
+verifie(res2.rows[0].res.code_dossier === 'STC-2027-002', 'code dossier 2 séquencé (concurrence)');
 await db.exec('RESET ROLE');
 
 verifie((await compte(db, 'SELECT count(*)::int n FROM famille')) === 2, '2 dossiers famille');
@@ -140,6 +143,13 @@ verifie((await compte(db, 'SELECT count(*)::int n FROM inscription_enfant')) ===
 verifie(
   (await compte(db, 'SELECT count(*)::int n FROM autorisation_parentale')) === 2,
   '2 autorisations parentales',
+);
+verifie(
+  (await compte(
+    db,
+    'SELECT count(*)::int n FROM autorisation_parentale WHERE autorise_mesures_medicales',
+  )) === 2,
+  '2 autorisations avec mesures médicales enregistrées',
 );
 verifie(
   (await compte(db, 'SELECT count(*)::int n FROM v_creneaux_disponibles WHERE nombre_inscrits > 0')) === 1,
@@ -155,6 +165,22 @@ try {
   verifie(false, 'RGPD absent => rejet');
 } catch (e) {
   verifie(String(e).includes('RGPD'), 'RGPD absent => rejet');
+}
+try {
+  const sansMedical = JSON.parse(JSON.stringify(donnees)) as Record<string, unknown>;
+  (sansMedical.autorisations as Record<string, unknown>).autorise_mesures_medicales = false;
+  await db.query('SELECT soumettre_inscription($1::jsonb) AS res', [JSON.stringify(sansMedical)]);
+  verifie(false, 'mesures médicales refusées => rejet');
+} catch (e) {
+  verifie(String(e).includes('mesures médicales'), 'mesures médicales refusées => rejet');
+}
+try {
+  const sansDroitImage = JSON.parse(JSON.stringify(donnees)) as Record<string, unknown>;
+  (sansDroitImage.autorisations as Record<string, unknown>).droit_image = false;
+  await db.query('SELECT soumettre_inscription($1::jsonb) AS res', [JSON.stringify(sansDroitImage)]);
+  verifie(false, 'droit à l’image refusé => rejet');
+} catch (e) {
+  verifie(String(e).includes('diffusion'), 'droit à l’image refusé => rejet');
 }
 try {
   const sansGroupe = JSON.parse(JSON.stringify(donnees)) as Record<string, unknown>;
