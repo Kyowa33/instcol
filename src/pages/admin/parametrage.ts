@@ -1,5 +1,6 @@
 import { blocErreur, echappe, qs, toast } from '../../lib/dom';
 import { dateFr, heureFr } from '../../lib/format';
+import { ouvrirModal } from '../../lib/modal';
 import { oublierParametrage } from '../../lib/parametrage';
 import { gardeAdmin } from '../../lib/session';
 import { messageErreur, siErreur, supabase } from '../../lib/supabase';
@@ -40,6 +41,15 @@ let annees: AnneeScolaire[] = [];
 let lieux: Lieu[] = [];
 let activites: Activite[] = [];
 let niveaux: NiveauScolaire[] = [];
+
+// Filtre « année » des onglets paramétrés par année (mémorisé d'un onglet
+// à l'autre ; vide = toutes les années).
+let filtreAnnee = '';
+
+/** Un onglet est « par année » s'il comporte une colonne annee_scolaire_id. */
+function cfgParAnnee(cfg: TableCfg): boolean {
+  return cfg.colonnes.some((c) => c.cle === 'annee_scolaire_id');
+}
 
 const optAnnees = (): Option[] =>
   annees.map((a) => ({ v: a.id, l: `${a.libelle}${a.est_active ? ' (active)' : ''}` }));
@@ -180,9 +190,9 @@ function valeurCellule(cfg: TableCfg, cle: string, ligne: Ligne): string {
   }
 }
 
-function tableauHtml(cfg: TableCfg, lignes: Ligne[]): string {
+function tableauHtml(cfg: TableCfg, lignes: Ligne[], messageVide = cfg.messageVide): string {
   if (!lignes.length) {
-    return `<p class="aide">${echappe(cfg.messageVide)}</p>`;
+    return `<p class="aide">${echappe(messageVide)}</p>`;
   }
   const entetes = cfg.affichage
     .map((cle) => `<th>${echappe(cfg.colonnes.find((c) => c.cle === cle)?.label ?? cle)}</th>`)
@@ -262,51 +272,26 @@ function blocNiveaux(niveauxChoisis: Set<string>): string {
 function defaut(c: ChampCfg): unknown {
   if (c.type === 'case') return false;
   if (c.type === 'select' && c.cle === 'annee_scolaire_id') {
-    return annees.find((a) => a.est_active)?.id ?? '';
+    // L'année filtrée (si un filtre est actif) prime sur l'année active.
+    return filtreAnnee || annees.find((a) => a.est_active)?.id || '';
   }
   return '';
+}
+
+function blocRecopie(): string {
+  const active = annees.find((a) => a.est_active);
+  if (!active) return '';
+  return `<label class="case"><input type="checkbox" name="copier_parametrage" checked/>
+    <span>Recopier le paramétrage de l'année ${echappe(active.libelle)}
+      <small>Reprend créneaux (+ niveaux éligibles), tarifs par activité et frais de dossier.
+      À ajuster ensuite si besoin.</small></span></label>`;
 }
 
 function formHtml(cfg: TableCfg, ligne: Ligne | null, niveauxChoisis: Set<string>): string {
   const champs = cfg.colonnes.map((c) => champModal(c, ligne ? ligne[c.cle] : defaut(c))).join('');
   const bloc = cfg.speciale === 'creneau' ? blocNiveaux(niveauxChoisis) : '';
-  return `<div class="grille-2">${champs}</div>${bloc}`;
-}
-
-function ouvrirModal(
-  titre: string,
-  corps: string,
-  onValider: (voile: HTMLElement) => Promise<void>,
-): void {
-  const voile = document.createElement('div');
-  voile.className = 'voile';
-  voile.innerHTML = `<div class="boite">
-      <h2>${echappe(titre)}</h2>
-      <form id="form-modal">${corps}
-        <div class="btn-groupe">
-          <button type="submit" class="btn btn-primaire">Enregistrer</button>
-          <button type="button" class="btn" data-annuler>Annuler</button>
-        </div>
-      </form>
-    </div>`;
-  document.body.appendChild(voile);
-
-  voile.querySelector('[data-annuler]')?.addEventListener('click', () => voile.remove());
-  voile.addEventListener('click', (ev) => {
-    if (ev.target === voile) voile.remove();
-  });
-  voile.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const form = ev.target as HTMLFormElement;
-    if (!form.reportValidity()) return;
-    const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if (btn) btn.disabled = true;
-    onValider(voile)
-      .catch((e) => {
-        toast(messageErreur(e), 'erreur');
-        if (btn) btn.disabled = false;
-      });
-  });
+  const recopie = cfg.speciale === 'annee' && !ligne ? blocRecopie() : '';
+  return `<div class="grille-2">${champs}</div>${recopie}${bloc}`;
 }
 
 function lireValeurs(voile: HTMLElement, cfg: TableCfg): Ligne {
@@ -328,19 +313,117 @@ function lireValeurs(voile: HTMLElement, cfg: TableCfg): Ligne {
   return v;
 }
 
+async function recopierParametrage(sourceId: string, cibleId: string): Promise<number> {
+  let n = 0;
+
+  // Créneaux de l'année source + niveaux éligibles associés
+  const creneaux = siErreur(
+    await supabase.from('creneau_groupe').select('*').eq('annee_scolaire_id', sourceId),
+  ) as Ligne[];
+  for (const c of creneaux) {
+    const ins = siErreur(
+      await supabase
+        .from('creneau_groupe')
+        .insert({
+          annee_scolaire_id: cibleId,
+          activite_id: c.activite_id,
+          lieu_id: c.lieu_id,
+          jour_semaine: c.jour_semaine,
+          horaire_debut: c.horaire_debut,
+          horaire_fin: c.horaire_fin,
+          precision_frequence: c.precision_frequence,
+          capacite_max: c.capacite_max,
+        })
+        .select('id')
+        .single(),
+    ) as { id: string };
+    n++;
+
+    const liaisons = siErreur(
+      await supabase
+        .from('creneau_niveau')
+        .select('niveau_scolaire_id')
+        .eq('creneau_groupe_id', String(c.id)),
+    ) as { niveau_scolaire_id: string }[];
+    if (liaisons.length) {
+      siErreur(
+        await supabase.from('creneau_niveau').insert(
+          liaisons.map((l) => ({
+            creneau_groupe_id: ins.id,
+            niveau_scolaire_id: l.niveau_scolaire_id,
+          })),
+        ),
+      );
+      n += liaisons.length;
+    }
+  }
+
+  // Tarifs par activité
+  const tarifs = siErreur(
+    await supabase
+      .from('tarif_activite')
+      .select('activite_id, montant')
+      .eq('annee_scolaire_id', sourceId),
+  ) as { activite_id: string; montant: number }[];
+  if (tarifs.length) {
+    siErreur(
+      await supabase
+        .from('tarif_activite')
+        .insert(tarifs.map((t) => ({ ...t, annee_scolaire_id: cibleId }))),
+    );
+    n += tarifs.length;
+  }
+
+  // Frais de dossier
+  const frais = siErreur(
+    await supabase
+      .from('tarif_famille_param')
+      .select('frais_fixe_famille')
+      .eq('annee_scolaire_id', sourceId)
+      .maybeSingle(),
+  ) as { frais_fixe_famille: number } | null;
+  if (frais) {
+    siErreur(
+      await supabase
+        .from('tarif_famille_param')
+        .insert({ annee_scolaire_id: cibleId, frais_fixe_famille: frais.frais_fixe_famille }),
+    );
+    n++;
+  }
+
+  return n;
+}
+
+/* (L'export CSV des groupes est désormais dans la rubrique Groupes — pages/admin/groupes.ts) */
+
+interface ResultatEnregistrement {
+  /** Nombre d'éléments recopiés depuis l'année active (0 si aucune recopie). */
+  recopie: number;
+  /** Message si la recopie a échoué après la création de la ligne. */
+  avertissement: string | null;
+}
+
 async function enregistrerLigne(
   cfg: TableCfg,
   valeurs: Ligne,
   id: string | null,
   voile: HTMLElement,
-): Promise<void> {
+): Promise<ResultatEnregistrement> {
   const niveauxChoisis = Array.from(
     voile.querySelectorAll<HTMLInputElement>('input[data-niveau]:checked'),
   ).map((i) => i.value);
 
-  // Une seule année active à la fois
-  if (cfg.speciale === 'annee' && valeurs.est_active === true) {
-    siErreur(await supabase.from('annee_scolaire').update({ est_active: false }).neq('id', id ?? ''));
+  // Année neuve : repérer l'année active SOURCE AVANT le basculement
+  // « une seule année active » (la recopie part de l'année active à cet instant).
+  let sourceRecopie: string | null = null;
+  if (cfg.speciale === 'annee' && !id) {
+    const coche = voile.querySelector<HTMLInputElement>('input[name="copier_parametrage"]');
+    if (coche?.checked) {
+      const active = siErreur(
+        await supabase.from('annee_scolaire').select('id').eq('est_active', true).maybeSingle(),
+      ) as { id: string } | null;
+      sourceRecopie = active?.id ?? null;
+    }
   }
 
   let ligneId = id;
@@ -377,6 +460,13 @@ async function enregistrerLigne(
     ligneId = ins.id;
   }
 
+  // Une seule année active à la fois — fait APRÈS l'enregistrement pour
+  // disposer d'un vrai id (un INSERT renvoie encore id = null ; filtrer
+  // sur neq('') ferait échouer la requête sur le type uuid).
+  if (cfg.speciale === 'annee' && valeurs.est_active === true && ligneId) {
+    siErreur(await supabase.from('annee_scolaire').update({ est_active: false }).neq('id', ligneId));
+  }
+
   // Liaison M:N créneau <-> niveaux
   if (cfg.speciale === 'creneau' && ligneId) {
     siErreur(await supabase.from('creneau_niveau').delete().eq('creneau_groupe_id', ligneId));
@@ -391,6 +481,19 @@ async function enregistrerLigne(
       );
     }
   }
+
+  // Recopie du paramétrage de l'année active vers la nouvelle année.
+  // En cas d'échec, la ligne reste créée : on prévient sans tout annuler.
+  let recopie = 0;
+  let avertissement: string | null = null;
+  if (sourceRecopie && ligneId && sourceRecopie !== ligneId) {
+    try {
+      recopie = await recopierParametrage(sourceRecopie, ligneId);
+    } catch (e) {
+      avertissement = messageErreur(e);
+    }
+  }
+  return { recopie, avertissement };
 }
 
 async function ouvrirFormulaire(
@@ -414,13 +517,37 @@ async function ouvrirFormulaire(
     formHtml(cfg, ligne, niveauxChoisis),
     async (voile) => {
       const valeurs = lireValeurs(voile, cfg);
-      await enregistrerLigne(cfg, valeurs, ligne ? String(ligne.id) : null, voile);
+      const res = await enregistrerLigne(cfg, valeurs, ligne ? String(ligne.id) : null, voile);
       oublierParametrage();
       voile.remove();
-      toast('Enregistré.', 'succes');
+      if (res.avertissement) {
+        toast(
+          `Enregistré — recopie du paramétrage impossible : ${res.avertissement}`,
+          'erreur',
+        );
+      } else if (res.recopie > 0) {
+        toast(
+          `Enregistré — paramétrage recopié (${res.recopie} élément${res.recopie > 1 ? 's' : ''}).`,
+          'succes',
+        );
+      } else {
+        toast('Enregistré.', 'succes');
+      }
       await recharger();
     },
   );
+}
+
+/** Liste de référence (années, lieux, activités, niveaux) pour les menus déroulants. */
+async function chargerRefs(): Promise<void> {
+  annees = siErreur(
+    await supabase.from('annee_scolaire').select('*').order('date_debut', { ascending: false }),
+  ) as AnneeScolaire[];
+  lieux = siErreur(await supabase.from('lieu').select('*').order('nom')) as Lieu[];
+  activites = siErreur(await supabase.from('activite').select('*').order('nom')) as Activite[];
+  niveaux = siErreur(
+    await supabase.from('niveau_scolaire').select('*').order('ordre_affichage'),
+  ) as NiveauScolaire[];
 }
 
 export async function rendreParametrage(racine: HTMLElement): Promise<void> {
@@ -428,14 +555,7 @@ export async function rendreParametrage(racine: HTMLElement): Promise<void> {
   const zone = coqueAdmin(racine, 'Paramétrage', 'parametrage');
 
   try {
-    annees = siErreur(
-      await supabase.from('annee_scolaire').select('*').order('date_debut', { ascending: false }),
-    ) as AnneeScolaire[];
-    lieux = siErreur(await supabase.from('lieu').select('*').order('nom')) as Lieu[];
-    activites = siErreur(await supabase.from('activite').select('*').order('nom')) as Activite[];
-    niveaux = siErreur(
-      await supabase.from('niveau_scolaire').select('*').order('ordre_affichage'),
-    ) as NiveauScolaire[];
+    await chargerRefs();
 
     zone.innerHTML = `
       <div class="onglets" id="onglets">
@@ -456,19 +576,61 @@ export async function rendreParametrage(racine: HTMLElement): Promise<void> {
       });
       const cfg = ONGLETS[i];
       try {
-        const lignes = siErreur(await supabase.from(cfg.table).select('*').order(cfg.tri)) as Ligne[];
+        const parAnnee = cfgParAnnee(cfg);
+        if (parAnnee) {
+          // Valeur par défaut : l'année active ; si elle a été supprimée, on
+          // repart sur « toutes ».
+          if (!filtreAnnee || !annees.some((a) => a.id === filtreAnnee)) {
+            filtreAnnee = annees.find((a) => a.est_active)?.id ?? '';
+          }
+        }
+
+        const requete = parAnnee && filtreAnnee
+          ? supabase.from(cfg.table).select('*').eq('annee_scolaire_id', filtreAnnee)
+          : supabase.from(cfg.table).select('*');
+        const lignes = siErreur(await requete.order(cfg.tri)) as Ligne[];
+
+        const barreAnnee = parAnnee
+          ? `<div class="filtres">
+              <label class="champ"><span>Filtrer par année</span>
+                <select id="filtre-annee">
+                  <option value="">Toutes les années</option>
+                  ${optAnnees()
+                    .map(
+                      (o) =>
+                        `<option value="${echappe(o.v)}" ${o.v === filtreAnnee ? 'selected' : ''}>${echappe(o.l)}</option>`,
+                    )
+                    .join('')}
+                </select></label>
+            </div>`
+          : '';
+
         tableauZone.innerHTML = `<div class="carte">
           <div class="flex-entre">
             <h2>${echappe(cfg.titre)}</h2>
             <button type="button" class="btn btn-primaire" id="btn-nouveau">+ Nouveau</button>
           </div>
-          ${tableauHtml(cfg, lignes)}
+          ${barreAnnee}
+          ${tableauHtml(
+            cfg,
+            lignes,
+            parAnnee && filtreAnnee
+              ? `Aucun élément pour l'année ${annees.find((a) => a.id === filtreAnnee)?.libelle ?? ''} (changer le filtre ou « + Nouveau »).`
+              : cfg.messageVide,
+          )}
         </div>`;
 
         qs('#btn-nouveau', tableauZone).addEventListener(
           'click',
           () => void ouvrirFormulaire(cfg, null, recharger),
         );
+
+        if (parAnnee) {
+          qs<HTMLSelectElement>('#filtre-annee', tableauZone).addEventListener('change', (ev) => {
+            filtreAnnee = (ev.target as HTMLSelectElement).value;
+            void recharger();
+          });
+        }
 
         tableauZone.querySelectorAll<HTMLButtonElement>('button[data-modifier]').forEach((b) => {
           b.addEventListener('click', () => {
@@ -503,7 +665,12 @@ export async function rendreParametrage(racine: HTMLElement): Promise<void> {
       }
     }
 
-    const recharger = (): Promise<void> => afficher(actif);
+    const recharger = async (): Promise<void> => {
+      // Recharge aussi les listes de référence : une année créée doit
+      // apparaître dans les menus déroulants des onglets suivants.
+      await chargerRefs();
+      await afficher(actif);
+    };
 
     zone.querySelector('#onglets')?.addEventListener('click', (ev) => {
       const b = (ev.target as Element).closest('button[data-index]');

@@ -40,6 +40,13 @@ export function oublierParametrage(): void {
   cache = null;
 }
 
+/**
+ * Levée quand aucune année scolaire n'est active : les inscriptions sont
+ * fermées. Permet aux pages publiques d'afficher un message dédié plutôt
+ * qu'une erreur technique.
+ */
+export class ErreurAnneesInactives extends Error {}
+
 async function charger(): Promise<Parametrage> {
   const annees = siErreur(
     await supabase
@@ -51,7 +58,7 @@ async function charger(): Promise<Parametrage> {
   ) as AnneeScolaire[];
   const annee = annees[0];
   if (!annee) {
-    throw new Error(
+    throw new ErreurAnneesInactives(
       "Aucune année scolaire active : les inscriptions sont fermées. " +
         "Connectez-vous à l'espace admin pour activer une année.",
     );

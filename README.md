@@ -18,11 +18,26 @@ au catéchisme et à l'aumônerie.
 
 **Administrateur (2 comptes partagés)**
 - Connexion (`admin_users`), réinitialisation de mot de passe, garde de session.
-- Tableau de bord : statistiques, recherche/filtres, export **CSV**, détail dossier
+- Tableau de bord : statistiques, recherche/filtres (**année scolaire** — active par
+  défaut — et statut de paiement), export **CSV** (respecte les filtres), détail dossier
   (montant encaissé, statut de paiement, notes internes, suppression).
+- **Détail dossier** : modification des informations d'un enfant (état civil,
+  sacrements, santé, groupes / créneaux de l'année) et **suppression d'un enfant**,
+  avec **recalcul automatique du montant total** du dossier (frais de dossier +
+  tarifs des activités, mêmes règles que la RPC d'inscription).
 - **Paramétrage 100 % administrable** : années scolaires (une seule active),
   lieux, activités, niveaux, créneaux (+ niveaux éligibles), tarifs par activité,
   frais de dossier. Tout est paramétrable **par année scolaire**.
+- **Filtrage par année** sur les onglets paramétrés par année (créneaux, tarifs,
+  frais de dossier) : le tableau n'affiche que les éléments de l'année choisie
+  (année active par défaut, ou « Toutes les années »).
+- **Rubrique « Groupes »** : vue des groupes d'enfants par activité / lieu / jour /
+  horaire (enfants inscrits, niveaux, effectif, capacité), filtrable (année — active
+  par défaut —, activité, lieu, recherche enfant / code dossier) et **exportable en
+  CSV** (une ligne par enfant).
+- **Recopie du paramétrage à la création d'une année** : l'administrateur est invité
+  (case cochée par défaut) à reprendre créneaux, niveaux éligibles, tarifs et frais de
+  dossier de l'année active, puis à ajuster si besoin.
 
 ## Démarrage
 
