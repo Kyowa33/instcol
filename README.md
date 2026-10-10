@@ -34,7 +34,7 @@ au catéchisme et à l'aumônerie.
   frais de dossier. Tout est paramétrable **par année scolaire**.
 - **Filtrage par année** sur les onglets paramétrés par année (créneaux, tarifs,
   frais de dossier) : le tableau n'affiche que les éléments de l'année choisie
-  (année active par défaut, ou « Toutes les années »).
+  (année active par défaut, ou la plus récente — pas de vue « toutes années »).
 - **Rubrique « Groupes »** : vue des groupes d'enfants par activité / lieu / jour /
   horaire (enfants inscrits, niveaux, effectif, capacité), filtrable (année — active
   par défaut —, activité, lieu, recherche enfant / code dossier) et **exportable en

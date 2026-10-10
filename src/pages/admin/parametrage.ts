@@ -578,10 +578,10 @@ export async function rendreParametrage(racine: HTMLElement): Promise<void> {
       try {
         const parAnnee = cfgParAnnee(cfg);
         if (parAnnee) {
-          // Valeur par défaut : l'année active ; si elle a été supprimée, on
-          // repart sur « toutes ».
+          // Le filtre est toujours une année : active par défaut, sinon la
+          // plus récente ; si l'année choisie a été supprimée, on repart de là.
           if (!filtreAnnee || !annees.some((a) => a.id === filtreAnnee)) {
-            filtreAnnee = annees.find((a) => a.est_active)?.id ?? '';
+            filtreAnnee = annees.find((a) => a.est_active)?.id ?? annees[0]?.id ?? '';
           }
         }
 
@@ -594,7 +594,6 @@ export async function rendreParametrage(racine: HTMLElement): Promise<void> {
           ? `<div class="filtres">
               <label class="champ"><span>Filtrer par année</span>
                 <select id="filtre-annee">
-                  <option value="">Toutes les années</option>
                   ${optAnnees()
                     .map(
                       (o) =>
